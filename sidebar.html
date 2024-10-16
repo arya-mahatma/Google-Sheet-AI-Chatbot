@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+      body { 
+        font-family: Arial, sans-serif; 
+        margin: 0;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+      #provider-select { 
+        width: 100%; 
+        margin-bottom: 10px;
+        padding: 5px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+      #chat-container { 
+        flex-grow: 1;
+        overflow-y: auto; 
+        border: 1px solid #ccc; 
+        padding: 10px; 
+        margin-bottom: 10px;
+        background-color: white;
+        border-radius: 5px;
+      }
+      .message {
+        margin-bottom: 10px;
+        padding: 8px;
+        border-radius: 5px;
+        max-width: 80%;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      .message-content {
+        flex-grow: 1;
+      }
+      .user-message {
+        background-color: #e1f5fe;
+        align-self: flex-end;
+        margin-left: auto;
+      }
+      .ai-message {
+        background-color: #f0f4c3;
+        align-self: flex-start;
+      }
+      #input-area {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        margin-bottom: 10px;
+      }
+      #clear-button {
+        margin-bottom: 10px;
+        background-color: #f44336;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      #input-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      #user-input { 
+        flex-grow: 1;
+        border: 1px solid #ccc;
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 5px;
+        resize: vertical;
+        min-height: 40px;
+        max-height: 200px;
+      }
+      #user-input:focus {
+        outline: none;
+        border-color: #4CAF50;
+      }
+      #send-button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        align-self: flex-end;
+      }
+      #regenerate-button {
+        background-color: #FFA500;
+        color: white;
+        margin-bottom: 10px;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      #button-container {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+      }
+      .action-button { 
+        padding: 5px 10px;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 5px;
+      }
+      #voice-button { background-color: #FF9800; }
+      #tts-button { background-color: #607D8B; }
+      #copy-button { background-color: #2196F3; }
+      #export-button { background-color: #9C27B0; }
+      .export-button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 2px 5px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 0.8em;
+        margin-left: 10px;
+      }
+      #sheets-integration {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px; /* Added gap for better spacing */
+        margin-top: 10px;
+        padding: 5px 0; /* Adjust padding for more space */
+      }
+
+      .sheets-button {
+        background-color: #0F9D58;
+        color: white;
+        border: none;
+        padding: 10px 20px; /* Adjust padding for button size */
+        border-radius: 5px;
+        cursor: pointer;
+        flex-grow: 1; /* Allow buttons to grow evenly */
+      }
+    </style>
+  </head>
+  <body>
+    <select id="provider-select">
+      <option value="OpenAI">OpenAI</option>
+      <option value="Groq">Groq</option>
+      <option value="Together">Together</option>
+      <option value="Google">Google</option>
+      <option value="Claude">Anthropic</option>
+      <option value="Hyperbolic">Hyperbolic</option>
+      <option value="Mistral">Mistral</option>
+      <option value="Cerebras">Cerebras</option>
+      <option value="SambaNova">SambaNova</option>
+    </select>
+    <div id="chat-container"></div>
+    <div id="input-area">
+      <button id="clear-button" class="action-button">Clear Chat</button>
+      <button id="regenerate-button">Regenerate Response</button>
+      <div id="input-container">
+        <textarea id="user-input" placeholder="Type your message..."></textarea>
+        <button id="send-button">Send</button>
+      </div>
+    </div>
+    <div id="button-container">
+      <button id="voice-button" class="action-button">🎤 Voice</button>
+      <button id="tts-button" class="action-button">🔊 TTS Off</button>
+      <button id="copy-button" class="action-button">Copy Chat</button>
+      <button id="export-button" class="action-button">Export PDF</button>
+    </div>
+    <div id="sheets-integration">
+      <button id="get-values-button" class="sheets-button">Get Cell/Range Values</button>
+      <button id="export-chat-button" class="sheets-button">Export Chat to Sheet</button>
+    </div>
+    
+    <script>
+      let conversationHistory = [];
+      let recognition;
+      let isTTSEnabled = false;
+      let voiceTimeout;
+      const VOICE_TIMEOUT_DURATION = 5000; // 5 seconds
+      let lastUserMessage = '';
+
+      function appendMessage(sender, message) {
+        var chatContainer = document.getElementById('chat-container');
+        var messageElement = document.createElement('div');
+        messageElement.className = 'message ' + (sender === 'You' ? 'user-message' : 'ai-message');
+        
+        var messageContent = document.createElement('div');
+        messageContent.className = 'message-content';
+        messageContent.innerHTML = '<strong>' + sender + ':</strong> ' + message;
+        messageElement.appendChild(messageContent);
+        
+        if (sender !== 'You') {
+          var exportButton = document.createElement('button');
+          exportButton.className = 'export-button';
+          exportButton.textContent = 'Export';
+          exportButton.onclick = function() {
+            exportMessageToSheet(message);
+          };
+          messageElement.appendChild(exportButton);
+        }
+        
+        chatContainer.appendChild(messageElement);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+      
+      function sendMessage(isRegenerate = false) {
+        var userInput = document.getElementById('user-input');
+        var message = isRegenerate ? lastUserMessage : userInput.value.trim();
+        if (message) {
+          if (!isRegenerate) {
+            appendMessage('You', message);
+            lastUserMessage = message;
+            // Log user message
+            logMessage(message, 'You');
+          } else {
+            // Remove the last AI message if regenerating
+            var chatContainer = document.getElementById('chat-container');
+            chatContainer.removeChild(chatContainer.lastElementChild);
+          }
+          var provider = document.getElementById('provider-select').value;
+          google.script.run.withSuccessHandler(function(result) {
+            if (typeof result === 'object' && result.response) {
+              appendMessage('AI', result.response);
+              conversationHistory = result.history;
+              // Log AI message
+              logMessage(result.response, 'AI');
+              if (isTTSEnabled) {
+                speakResponse(result.response);
+              }
+            } else {
+              appendMessage('AI', result);
+              // Log AI message
+              logMessage(result, 'AI');
+              if (isTTSEnabled) {
+                speakResponse(result);
+              }
+            }
+          }).chatbot(provider, message, conversationHistory);
+          if (!isRegenerate) {
+            userInput.value = '';
+          }
+        }
+      }
+
+      function regenerateResponse() {
+        if (lastUserMessage) {
+          sendMessage(true);
+        }
+      }
+
+      function clearChat() {
+        document.getElementById('chat-container').innerHTML = '';
+        conversationHistory = [];
+        lastUserMessage = '';
+      }
+
+      function copyChat() {
+        const chatContainer = document.getElementById('chat-container');
+        const chatText = chatContainer.innerText;
+        
+        navigator.clipboard.writeText(chatText).then(function() {
+          alert('Chat conversation copied to clipboard!');
+        }, function(err) {
+          console.error('Could not copy text: ', err);
+          alert('Failed to copy chat. Please try again or copy manually.');
+        });
+      }
+
+      function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const chatContainer = document.getElementById('chat-container');
+        const chatText = chatContainer.innerText;
+        
+        const lines = doc.splitTextToSize(chatText, 180);
+        doc.text(lines, 10, 10);
+        doc.save("chat_conversation.pdf");
+      }
+
+      function toggleVoiceRecognition() {
+        if (recognition && recognition.isStarted) {
+          stopVoiceRecognition();
+        } else {
+          startVoiceRecognition();
+        }
+      }
+
+      function startVoiceRecognition() {
+        if (!('webkitSpeechRecognition' in window)) {
+          alert("Voice recognition is not supported in your browser. Please try using Chrome.");
+          return;
+        }
+
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        recognition.onstart = function() {
+          document.getElementById('voice-button').textContent = '🛑 Stop';
+          document.getElementById('voice-button').classList.add('active');
+          resetVoiceTimeout();
+        };
+
+        recognition.onresult = function(event) {
+          resetVoiceTimeout();
+          var interim_transcript = '';
+          var final_transcript = '';
+
+          for (var i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              final_transcript += event.results[i][0].transcript;
+              document.getElementById('user-input').value = final_transcript;
+              sendMessage(); // Automatically send the message
+              stopVoiceRecognition(); // Stop recording after sending
+            } else {
+              interim_transcript += event.results[i][0].transcript;
+            }
+          }
+
+          document.getElementById('user-input').value = final_transcript + interim_transcript;
+        };
+
+        recognition.onerror = function(event) {
+          console.error('Speech recognition error', event.error);
+          stopVoiceRecognition();
+        };
+
+        recognition.onend = function() {
+          stopVoiceRecognition();
+        };
+
+        recognition.start();
+        recognition.isStarted = true;
+      }
+
+      function stopVoiceRecognition() {
+        if (recognition) {
+          recognition.stop();
+          recognition.isStarted = false;
+        }
+        document.getElementById('voice-button').textContent = '🎤 Voice';
+        document.getElementById('voice-button').classList.remove('active');
+        clearTimeout(voiceTimeout);
+      }
+
+      function resetVoiceTimeout() {
+        clearTimeout(voiceTimeout);
+        voiceTimeout = setTimeout(function() {
+          stopVoiceRecognition();
+        }, VOICE_TIMEOUT_DURATION);
+      }
+
+      function speakResponse(text) {
+        if ('speechSynthesis' in window && isTTSEnabled) {
+          var msg = new SpeechSynthesisUtterance();
+          msg.text = text;
+          window.speechSynthesis.speak(msg);
+        }
+      }
+
+      function toggleTTS() {
+        isTTSEnabled = !isTTSEnabled;
+        const ttsButton = document.getElementById('tts-button');
+        ttsButton.classList.toggle('active');
+        ttsButton.textContent = isTTSEnabled ? '🔊 TTS On' : '🔊 TTS Off';
+      }
+
+      function getValues() {
+        var input = prompt("Enter cell address (e.g., A1) or range address (e.g., A1:B5):");
+        if (input) {
+          google.script.run
+            .withSuccessHandler(function(result) {
+              if (result !== null) {
+                if (Array.isArray(result)) {
+                  // It's a range of values
+                  var formattedValues = result.map(row => row.join('\t')).join('\n');
+                  document.getElementById('user-input').value += formattedValues;
+                } else {
+                  // It's a single cell value
+                  document.getElementById('user-input').value += result;
+                }
+              } else {
+                alert("Failed to get values. Please check the cell or range address.");
+              }
+            })
+            .withFailureHandler(function(error) {
+              console.error('Error getting sheet values:', error);
+              alert("An error occurred while getting the values.");
+            })
+            .getSheetValuesFromServer(input);
+        }
+      }
+	  
+     function exportChatToSheet() {
+        var chatContainer = document.getElementById('chat-container');
+        var chatText = chatContainer.innerText;
+        
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (result === true) {
+              alert("Chat exported to sheet successfully!");
+            } else {
+              alert("Failed to export chat to sheet.");
+            }
+          })
+          .exportEntireChatToSheet(chatText); 
+      }
+
+      function exportMessageToSheet(message, role) {
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (result === true) {
+              console.log("Message exported successfully");
+              // Optionally, you can provide user feedback here
+            } else {
+              console.error("Failed to export message");
+            }
+          })
+          .withFailureHandler(function(error) {
+            console.error('Error exporting message:', error);
+          })
+          .exportMessageToSheet(message, role);
+      }
+
+      // Modify the click event listener for export buttons
+      document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('export-button')) {
+          e.preventDefault(); // Prevent default button behavior
+          var messageElement = e.target.closest('.message');
+          if (messageElement) {
+            var messageContent = messageElement.querySelector('.message-content').textContent;
+            var role = messageElement.classList.contains('user-message') ? 'You' : 'AI';
+            exportMessageToSheet(messageContent, role);
+          }
+        }
+      });
+	  
+      function logMessage(message, role, provider, model) {
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (result === true) {
+              console.log("Message logged successfully");
+            } else {
+              console.error("Failed to log message");
+            }
+          })
+          .withFailureHandler(function(error) {
+            console.error('Error logging message:', error);
+          })
+          .logChatMessage(message, role, provider, model);
+      }
+
+      // Modify the sendMessage function
+      function sendMessage(isRegenerate = false) {
+        var userInput = document.getElementById('user-input');
+        var message = isRegenerate ? lastUserMessage : userInput.value.trim();
+        if (message) {
+          var provider = document.getElementById('provider-select').value;
+          if (!isRegenerate) {
+            appendMessage('You', message);
+            lastUserMessage = message;
+            // Log user message
+            logMessage(message, 'You', provider, '');
+          } else {
+            // Remove the last AI message if regenerating
+            var chatContainer = document.getElementById('chat-container');
+            chatContainer.removeChild(chatContainer.lastElementChild);
+          }
+          google.script.run.withSuccessHandler(function(result) {
+            if (typeof result === 'object' && result.response) {
+              appendMessage('AI', result.response);
+              conversationHistory = result.history;
+              // Log AI message with provider and model
+              logMessage(result.response, 'AI', provider, result.model);
+              if (isTTSEnabled) {
+                speakResponse(result.response);
+              }
+            } else {
+              appendMessage('AI', result.response);
+              // Log AI message with provider and model
+              logMessage(result.response, 'AI', provider, result.model);
+              if (isTTSEnabled) {
+                speakResponse(result.response);
+              }
+            }
+          }).chatbot(provider, message, conversationHistory);
+          if (!isRegenerate) {
+            userInput.value = '';
+          }
+        }
+      }
+
+      document.getElementById('send-button').addEventListener('click', () => sendMessage());
+      document.getElementById('regenerate-button').addEventListener('click', regenerateResponse);
+      document.getElementById('clear-button').addEventListener('click', clearChat);
+      document.getElementById('copy-button').addEventListener('click', copyChat);
+      document.getElementById('export-button').addEventListener('click', exportToPDF);
+      document.getElementById('voice-button').addEventListener('click', toggleVoiceRecognition);
+      document.getElementById('tts-button').addEventListener('click', toggleTTS);
+      document.getElementById('get-values-button').addEventListener('click', getValues);
+      document.getElementById('export-chat-button').addEventListener('click', exportChatToSheet);
+      document.getElementById('user-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+    </script>
+  </body>
+</html>
