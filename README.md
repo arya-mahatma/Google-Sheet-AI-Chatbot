@@ -23,26 +23,42 @@ This project implements an AI-powered chatbot sidebar within Google Sheets, allo
 ## Setup Instructions
 
 1. Open your Google Sheet.
-2. Go to Extensions > Apps Script.
+2. Go to **Extensions > Apps Script**.
 3. Create two new files:
-   - Name one `sidebar.html` and paste the contents of the provided HTML file.
-   - Name the other `Code.gs` and paste the contents of the provided JavaScript file.
+   - `sidebar.html`: Paste the provided HTML code.
+   - `Code.gs`: Paste the provided script.
 4. Save the project and close the Apps Script editor.
-5. Refresh your Google Sheet.
-6. You should now see an "AI Chatbot" menu in your Google Sheets toolbar.
+5. Refresh your Google Sheet, and the **AI Chatbot** menu will appear in the toolbar.
+6. Click on **AI Chatbot** in the menu and select any option.
+7. A prompt will appear asking for authorization. Click **Continue**.
+8. Sign in with your Google account and click **Allow** to grant the required permissions.
 
-## Usage
+Continue to the next step to set up your API key.
 
-1. **Important**: Before using any AI provider, you must first set up your API key:
-   - Click on "AI Chatbot" in the menu.
-   - Select the submenu for the provider you want to use (e.g., "OpenAI").
-   - Click "Set API Key" and enter your API key when prompted.
-   - Repeat this process for each provider you intend to use.
+### Getting Your API Key
 
-2. Once your API key(s) are set up, click on "AI Chatbot" > "Start AI Chatbot" to open the chatbot sidebar.
-3. Select your preferred AI provider from the dropdown menu.
-4. Enter your message in the text area and click "Send" or press Enter.
-5. The AI's response will appear in the chat window.
+To use the AI Chatbot, you need to set up your API key. Here’s how to do it for OpenAI:
+
+1. Go to [OpenAI API Keys](https://platform.openai.com/api-keys).
+2. Sign in to your OpenAI account (or create one if you don’t have an account).
+3. Click on **Create new secret key** and copy your API key.
+4. Go back to your Google Sheets.
+5. Click on **AI Chatbot** in the menu.
+6. Select **OpenAI** from the submenu.
+7. Click **Set API Key** and enter your API key when prompted.
+
+**Note**: If you plan to use other AI providers, you will need to follow similar steps to obtain and set their API keys. Each provider will have its own process for generating API keys, usually found in their account or developer settings.
+
+Continue to the next step to start using the AI Chatbot!
+
+### Starting the AI Chatbot Sidebar
+
+1. Once your API keys are set up, click on **AI Chatbot** > **Start AI Chatbot** to open the sidebar.
+2. Select your AI provider from the dropdown menu.
+3. Enter your message and click **Send** or press **Enter**.
+4. The AI's response will appear in the chat window.
+
+Congratulations on successfully running the AI Chatbot! Enjoy exploring its capabilities!
 
 ## Important Security Notes
 
@@ -69,3 +85,10 @@ This project is open for contributions. Feel free to fork the repository, make i
 ## Disclaimer
 
 This project is not officially associated with or endorsed by any of the AI providers mentioned. Use it at your own risk and in compliance with each provider's terms of service.
+
+### To-Do
+
+- [ ] More model selection
+- [ ] More user-friendly interaction with the sheets
+- [ ] Custom API endpoints
+- [ ] More features coming soon
