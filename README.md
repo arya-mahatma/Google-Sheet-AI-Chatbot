@@ -86,7 +86,7 @@ This project is open for contributions. Feel free to fork the repository, make i
 
 This project is not officially associated with or endorsed by any of the AI providers mentioned. Use it at your own risk and in compliance with each provider's terms of service.
 
-### To-Do
+## To-Do
 
 - [ ] More model selection
 - [ ] More user-friendly interaction with the sheets
