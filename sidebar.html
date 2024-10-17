@@ -10,7 +10,7 @@
         padding: 10px;
         display: flex;
         flex-direction: column;
-        height: 100vh;
+        height: 97vh;
         background-color: #f0f0f0;
       }
       #provider-select { 
@@ -132,19 +132,19 @@
       #sheets-integration {
         display: flex;
         justify-content: space-between;
-        gap: 10px; /* Added gap for better spacing */
+        gap: 10px; 
         margin-top: 10px;
-        padding: 5px 0; /* Adjust padding for more space */
+        padding: 5px 0; 
       }
 
       .sheets-button {
         background-color: #0F9D58;
         color: white;
         border: none;
-        padding: 10px 20px; /* Adjust padding for button size */
+        padding: 10px 20px; 
         border-radius: 5px;
         cursor: pointer;
-        flex-grow: 1; /* Allow buttons to grow evenly */
+        flex-grow: 1; 
       }
     </style>
   </head>
@@ -185,7 +185,7 @@
       let recognition;
       let isTTSEnabled = false;
       let voiceTimeout;
-      const VOICE_TIMEOUT_DURATION = 5000; // 5 seconds
+      const VOICE_TIMEOUT_DURATION = 5000; 
       let lastUserMessage = '';
 
       function appendMessage(sender, message) {
@@ -381,11 +381,9 @@
             .withSuccessHandler(function(result) {
               if (result !== null) {
                 if (Array.isArray(result)) {
-                  // It's a range of values
                   var formattedValues = result.map(row => row.join('\t')).join('\n');
                   document.getElementById('user-input').value += formattedValues;
                 } else {
-                  // It's a single cell value
                   document.getElementById('user-input').value += result;
                 }
               } else {
@@ -420,7 +418,6 @@
           .withSuccessHandler(function(result) {
             if (result === true) {
               console.log("Message exported successfully");
-              // Optionally, you can provide user feedback here
             } else {
               console.error("Failed to export message");
             }

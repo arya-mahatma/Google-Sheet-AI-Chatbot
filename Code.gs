@@ -216,9 +216,6 @@ function chatbot(provider, message, conversationHistory = []) {
       case 'Google':
         aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from Google';
         break;
-      // case 'HuggingFace':
-      //   aiResponse = result?.[0]?.generated_text || 'No response from HuggingFace';
-      //   break;
       case 'Anthropic':
         aiResponse = result.content?.[0]?.text || 'No response from Anthropic';
         break;
