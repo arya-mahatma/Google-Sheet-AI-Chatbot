@@ -1,11 +1,14 @@
 ![AI Sidebar Chatbot](./img/chatbot.png)
 
-Quick Deployment
-[![Open in Google Sheets](./img/googlesheets.svg)](https://docs.google.com/spreadsheets/d/1JIqJvPlUXe-VbC3HiWlmM4gizSINiyl9SkX7tUMOYUw/edit?usp=sharing)
-
 # AI Chatbot for Google Sheets
 
 This project implements an AI-powered chatbot sidebar within Google Sheets, allowing users to interact with various AI models directly alongside their spreadsheet environment. The chatbot provides a convenient way to access AI capabilities while working in Google Sheets, though it does not directly manipulate spreadsheet data.
+
+### Quick Deployment
+
+Go to **File > Make a copy**.
+
+[![Open in Google Sheets](./img/googlesheets.svg)](https://docs.google.com/spreadsheets/d/1JIqJvPlUXe-VbC3HiWlmM4gizSINiyl9SkX7tUMOYUw/edit?usp=sharing)
 
 ## Key Features
 
